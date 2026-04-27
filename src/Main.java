@@ -3,89 +3,88 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class Main {
 
-    static class Feet {
-        private final double value;
+    enum LengthUnit {
+        FEET(1.0),
+        INCH(1.0 / 12.0),
+        YARD(3.0),
+        CM(0.393701 / 12.0);
 
-        public Feet(double value) {
+        private final double toFeet;
+
+        LengthUnit(double toFeet) {
+            this.toFeet = toFeet;
+        }
+
+        double toFeet(double value) {
+            return value * toFeet;
+        }
+    }
+
+    static class Quantity {
+        private final double value;
+        private final LengthUnit unit;
+
+        public Quantity(double value, LengthUnit unit) {
             this.value = value;
+            this.unit = unit;
+        }
+
+        private double toBase() {
+            return unit.toFeet(value);
         }
 
         @Override
         public boolean equals(Object obj) {
             if (this == obj) return true;
             if (obj == null || getClass() != obj.getClass()) return false;
-            Feet other = (Feet) obj;
-            return Double.compare(this.value, other.value) == 0;
+            Quantity other = (Quantity) obj;
+            return Double.compare(this.toBase(), other.toBase()) == 0;
         }
-    }
-
-    static class Inches {
-        private final double value;
-
-        public Inches(double value) {
-            this.value = value;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
-            Inches other = (Inches) obj;
-            return Double.compare(this.value, other.value) == 0;
-        }
-    }
-
-    static boolean compareFeet(double a, double b) {
-        return new Feet(a).equals(new Feet(b));
-    }
-
-    static boolean compareInches(double a, double b) {
-        return new Inches(a).equals(new Inches(b));
     }
 
     public static void main(String[] args) {
-        System.out.println(compareFeet(1.0, 1.0));
-        System.out.println(compareInches(1.0, 1.0));
+        System.out.println(new Quantity(1.0, LengthUnit.YARD)
+                .equals(new Quantity(3.0, LengthUnit.FEET)));
+
+        System.out.println(new Quantity(1.0, LengthUnit.CM)
+                .equals(new Quantity(0.393701, LengthUnit.INCH)));
     }
 
-    public static class QuantityMeasurementAppTest {
+    public static class QuantityTest {
 
         @Test
-        void testFeet_SameValue() {
-            assertTrue(compareFeet(1.0, 1.0));
+        void testYardToFeet() {
+            assertTrue(new Quantity(1.0, LengthUnit.YARD)
+                    .equals(new Quantity(3.0, LengthUnit.FEET)));
         }
 
         @Test
-        void testFeet_DifferentValue() {
-            assertFalse(compareFeet(1.0, 2.0));
+        void testYardToInch() {
+            assertTrue(new Quantity(1.0, LengthUnit.YARD)
+                    .equals(new Quantity(36.0, LengthUnit.INCH)));
         }
 
         @Test
-        void testInches_SameValue() {
-            assertTrue(compareInches(1.0, 1.0));
+        void testCmToInch() {
+            assertTrue(new Quantity(1.0, LengthUnit.CM)
+                    .equals(new Quantity(0.393701, LengthUnit.INCH)));
         }
 
         @Test
-        void testInches_DifferentValue() {
-            assertFalse(compareInches(1.0, 2.0));
-        }
-
-        @Test
-        void testNullComparison() {
-            Feet f = new Feet(1.0);
-            assertFalse(f.equals(null));
+        void testDifferentValues() {
+            assertFalse(new Quantity(1.0, LengthUnit.YARD)
+                    .equals(new Quantity(2.0, LengthUnit.FEET)));
         }
 
         @Test
         void testSameReference() {
-            Inches i = new Inches(1.0);
-            assertTrue(i.equals(i));
+            Quantity q = new Quantity(2.0, LengthUnit.YARD);
+            assertTrue(q.equals(q));
         }
 
         @Test
-        void testDifferentType() {
-            Feet f = new Feet(1.0);
-            assertFalse(f.equals("1.0"));
+        void testNullComparison() {
+            assertFalse(new Quantity(1.0, LengthUnit.CM).equals(null));
         }
     }
 }
