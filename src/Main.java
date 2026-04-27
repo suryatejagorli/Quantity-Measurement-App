@@ -1,15 +1,62 @@
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-public class Main {
-    public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
+public class Main {
+
+    static class Feet {
+        private final double value;
+
+        public Feet(double value) {
+            this.value = value;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+            Feet other = (Feet) obj;
+            return Double.compare(this.value, other.value) == 0;
+        }
+    }
+
+    public static void main(String[] args) {
+        Feet f1 = new Feet(1.0);
+        Feet f2 = new Feet(1.0);
+        System.out.println(f1.equals(f2));
+    }
+
+    public static class QuantityMeasurementAppTest {
+
+        @Test
+        void testEquality_SameValue() {
+            Feet f1 = new Feet(1.0);
+            Feet f2 = new Feet(1.0);
+            assertTrue(f1.equals(f2));
+        }
+
+        @Test
+        void testEquality_DifferentValue() {
+            Feet f1 = new Feet(1.0);
+            Feet f2 = new Feet(2.0);
+            assertFalse(f1.equals(f2));
+        }
+
+        @Test
+        void testEquality_NullComparison() {
+            Feet f1 = new Feet(1.0);
+            assertFalse(f1.equals(null));
+        }
+
+        @Test
+        void testEquality_SameReference() {
+            Feet f1 = new Feet(1.0);
+            assertTrue(f1.equals(f1));
+        }
+
+        @Test
+        void testEquality_DifferentType() {
+            Feet f1 = new Feet(1.0);
+            assertFalse(f1.equals("1.0"));
         }
     }
 }
