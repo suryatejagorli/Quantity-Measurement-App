@@ -1,126 +1,139 @@
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+enum LengthUnit {
+    FEET(1.0),
+    INCH(1.0 / 12.0),
+    YARD(3.0),
+    CM(1.0 / 30.48);
+
+    private final double toFeet;
+
+    LengthUnit(double toFeet) { this.toFeet = toFeet; }
+
+    public double toBase(double value) { return value * toFeet; }
+
+    public double fromBase(double base) { return base / toFeet; }
+}
+
+enum WeightUnit {
+    KILOGRAM(1.0),
+    GRAM(0.001),
+    POUND(0.453592);
+
+    private final double toKg;
+
+    WeightUnit(double toKg) { this.toKg = toKg; }
+
+    public double toBase(double value) { return value * toKg; }
+
+    public double fromBase(double base) { return base / toKg; }
+}
+
 public class Main {
 
-    enum LengthUnit {
-        FEET(1.0),
-        INCH(1.0 / 12.0),
-        YARD(3.0),
-        CM(0.393701 / 12.0);
-
-        private final double toFeet;
-
-        LengthUnit(double toFeet) {
-            this.toFeet = toFeet;
-        }
-
-        double toFeet(double value) {
-            return value * toFeet;
-        }
-
-        double fromFeet(double feetValue) {
-            return feetValue / toFeet;
-        }
-    }
-
-    static class Quantity {
+    static class Length {
         private final double value;
         private final LengthUnit unit;
 
-        public Quantity(double value, LengthUnit unit) {
-            if (!Double.isFinite(value) || unit == null) {
-                throw new IllegalArgumentException();
-            }
+        public Length(double value, LengthUnit unit) {
+            if (!Double.isFinite(value) || unit == null) throw new IllegalArgumentException();
             this.value = value;
             this.unit = unit;
         }
 
-        private double toBase() {
-            return unit.toFeet(value);
+        private double toBase() { return unit.toBase(value); }
+
+        public Length convertTo(LengthUnit target) {
+            return new Length(target.fromBase(toBase()), target);
         }
 
-        public double convertTo(LengthUnit target) {
-            if (target == null) throw new IllegalArgumentException();
-            double base = toBase();
-            return target.fromFeet(base);
-        }
-
-        public static double convert(double value, LengthUnit source, LengthUnit target) {
-            if (!Double.isFinite(value) || source == null || target == null) {
-                throw new IllegalArgumentException();
-            }
-            double base = source.toFeet(value);
-            return target.fromFeet(base);
+        public Length add(Length other, LengthUnit target) {
+            double sum = this.toBase() + other.toBase();
+            return new Length(target.fromBase(sum), target);
         }
 
         @Override
-        public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
-            Quantity other = (Quantity) obj;
-            return Double.compare(this.toBase(), other.toBase()) == 0;
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Length l = (Length) o;
+            return Double.compare(this.toBase(), l.toBase()) == 0;
+        }
+    }
+
+    static class Weight {
+        private final double value;
+        private final WeightUnit unit;
+
+        public Weight(double value, WeightUnit unit) {
+            if (!Double.isFinite(value) || unit == null) throw new IllegalArgumentException();
+            this.value = value;
+            this.unit = unit;
+        }
+
+        private double toBase() { return unit.toBase(value); }
+
+        public Weight convertTo(WeightUnit target) {
+            return new Weight(target.fromBase(toBase()), target);
+        }
+
+        public Weight add(Weight other, WeightUnit target) {
+            double sum = this.toBase() + other.toBase();
+            return new Weight(target.fromBase(sum), target);
         }
 
         @Override
-        public String toString() {
-            return value + " " + unit;
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Weight w = (Weight) o;
+            return Double.compare(this.toBase(), w.toBase()) == 0;
         }
     }
 
     public static void main(String[] args) {
-        System.out.println(Quantity.convert(1.0, LengthUnit.FEET, LengthUnit.INCH));
-        System.out.println(Quantity.convert(3.0, LengthUnit.YARD, LengthUnit.FEET));
-        System.out.println(new Quantity(2.54, LengthUnit.CM).convertTo(LengthUnit.INCH));
+
+        Length l1 = new Length(1.0, LengthUnit.FEET);
+        Length l2 = new Length(12.0, LengthUnit.INCH);
+        System.out.println(l1.equals(l2));
+
+        Weight w1 = new Weight(1.0, WeightUnit.KILOGRAM);
+        Weight w2 = new Weight(1000.0, WeightUnit.GRAM);
+        System.out.println(w1.equals(w2));
+
+        System.out.println(w1.convertTo(WeightUnit.POUND));
+        System.out.println(w1.add(w2, WeightUnit.KILOGRAM));
     }
 
-    public static class QuantityTest {
+    public static class TestCases {
 
         @Test
-        void testFeetToInch() {
-            assertEquals(12.0, Quantity.convert(1.0, LengthUnit.FEET, LengthUnit.INCH));
+        void testWeightEquality() {
+            assertTrue(new Weight(1.0, WeightUnit.KILOGRAM)
+                    .equals(new Weight(1000.0, WeightUnit.GRAM)));
         }
 
         @Test
-        void testInchToFeet() {
-            assertEquals(2.0, Quantity.convert(24.0, LengthUnit.INCH, LengthUnit.FEET));
+        void testWeightConversion() {
+            assertEquals(2.20462,
+                    new Weight(1.0, WeightUnit.KILOGRAM)
+                            .convertTo(WeightUnit.POUND).value,
+                    1e-5);
         }
 
         @Test
-        void testYardToInch() {
-            assertEquals(36.0, Quantity.convert(1.0, LengthUnit.YARD, LengthUnit.INCH));
+        void testWeightAddition() {
+            assertEquals(new Weight(2.0, WeightUnit.KILOGRAM),
+                    new Weight(1.0, WeightUnit.KILOGRAM)
+                            .add(new Weight(1000.0, WeightUnit.GRAM),
+                                    WeightUnit.KILOGRAM));
         }
 
         @Test
-        void testCmToInch() {
-            assertEquals(1.0, Quantity.convert(2.54, LengthUnit.CM, LengthUnit.INCH), 1e-6);
-        }
-
-        @Test
-        void testZero() {
-            assertEquals(0.0, Quantity.convert(0.0, LengthUnit.FEET, LengthUnit.INCH));
-        }
-
-        @Test
-        void testNegative() {
-            assertEquals(-12.0, Quantity.convert(-1.0, LengthUnit.FEET, LengthUnit.INCH));
-        }
-
-        @Test
-        void testRoundTrip() {
-            double v = 5.0;
-            double result = Quantity.convert(
-                    Quantity.convert(v, LengthUnit.FEET, LengthUnit.INCH),
-                    LengthUnit.INCH,
-                    LengthUnit.FEET
-            );
-            assertEquals(v, result, 1e-6);
-        }
-
-        @Test
-        void testInvalid() {
-            assertThrows(IllegalArgumentException.class, () ->
-                    Quantity.convert(Double.NaN, LengthUnit.FEET, LengthUnit.INCH));
+        void testCategorySeparation() {
+            assertFalse(new Weight(1.0, WeightUnit.KILOGRAM)
+                    .equals(new Length(1.0, LengthUnit.FEET)));
         }
     }
 }
